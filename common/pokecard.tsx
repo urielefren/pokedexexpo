@@ -4,9 +4,19 @@ import { StyleSheet, View } from 'react-native';
 interface IProps {
     pokeimage?: string;
     pokename?: string;
+    pokeInfo?: any;
 }
 
 class PokeCard extends React.Component<IProps, {}> {
+    componentDidMount() {
+        this.onCardClicked = this.onCardClicked.bind(this);
+    }
+
+    onCardClicked() {
+        if (this.props.pokeInfo) {
+            this.props.onCardSelected(this.props.pokeInfo);
+        }
+    }
 
     render() {
         const pokeCardCSS = {
@@ -28,7 +38,7 @@ class PokeCard extends React.Component<IProps, {}> {
 
         return (
             <View style={styles.view}>
-                <div style={pokeCardCSS.pokecard}>
+                <div style={pokeCardCSS.pokecard} onClick={this.onCardClicked}>
                     <img style={pokeCardCSS.pokeimage} src={this.props.pokeimage}></img>
                     <br></br>
                     <label>{this.props.pokename}</label>

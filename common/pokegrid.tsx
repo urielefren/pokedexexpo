@@ -4,12 +4,14 @@ import axios from 'axios';
 import PokeCard from './pokecard';
 import Spinner from './spinner';
 import Search from './searchtext';
+import PokeDetails from './pokedetails';
 
 
 interface IPokemon {
     name: string;
     url: string;
     image?: string;
+    info?: any | null;
 }
 
 interface IState {
@@ -19,6 +21,7 @@ interface IState {
     nextCall: string;
     previousCall: string;
     shouldShow: boolean;
+    currentPokemonSelected: any;
 }
 
 class PokeGrid extends React.Component<{}, IState> {
@@ -34,6 +37,7 @@ class PokeGrid extends React.Component<{}, IState> {
             previousCall: '',
             currentCall: '',
             shouldShow: false,
+            currentPokemonSelected: null,
         };
     }
     async componentDidMount() {
@@ -42,6 +46,7 @@ class PokeGrid extends React.Component<{}, IState> {
         this.previousHandler = this.previousHandler.bind(this);
         this.nextHandler = this.nextHandler.bind(this);
         this.onSearchChange = this.onSearchChange.bind(this);
+        this.onCardSelected = this.onCardSelected.bind(this);
     }
 
     async initComponent(url: string) {
@@ -55,8 +60,9 @@ class PokeGrid extends React.Component<{}, IState> {
             const pokemonList = data.data.results;
             const allPromises: any[] = [];
             pokemonList.forEach((pokemon: IPokemon) => {
-                allPromises.push(this.getPokemonImage(pokemon.url).then((image) => {
-                    pokemon.image = image;
+                allPromises.push(this.getPokemonImage(pokemon.url).then((data) => {
+                    pokemon.image = data.sprites.front_default;
+                    pokemon.info = data;
                 }));
             });
             Promise.all(allPromises).then(() => {
@@ -69,7 +75,7 @@ class PokeGrid extends React.Component<{}, IState> {
 
     async getPokemonImage(url: string) {
         const data2 = await axios.get(url);
-        return data2 ? data2.data.sprites.front_default : null;
+        return data2 ? data2.data : null;
     }
 
     nextHandler() {
@@ -116,24 +122,46 @@ class PokeGrid extends React.Component<{}, IState> {
         this.setState({filterList});
     }
 
+    onCardSelected(currentPokemonSelected: any) {
+        console.log(currentPokemonSelected);
+        this.setState({ currentPokemonSelected});
+    }
+
     render() {
+        const pokeGridCSS = {
+            areaVisible: {
+                display: 'block',
+            },
+            areaHidden: {
+                display: 'none',
+            },
+        };
+
         return (
             <div>
-                <Spinner shouldShow={this.state.shouldShow} />
-                <Search onSearchChange={this.onSearchChange} />
-                <FlatList
-                    style={styles.GridView}
-                    showsHorizontalScrollIndicator={false}
-                    data={this.state.filterList}
-                    keyExtractor={item => item.name}
-                    renderItem={({ item }) => 
-                        <PokeCard pokeimage={item.image} pokename={item.name}></PokeCard>}
-                    numColumns={3}
-                />
-                <View style={styles.optionContainer}>
-                    <button style={this.buttonBinding(true)} disabled={this.state.previousCall ? false: true} onClick={this.previousHandler}>previous</button>
-                    <button style={this.buttonBinding(false)} disabled={this.state.nextCall ? false : true} onClick={this.nextHandler}>Next</button>
-                </View>
+                <div style={this.state.currentPokemonSelected ? pokeGridCSS.areaHidden : pokeGridCSS.areaVisible}>
+                    <Spinner shouldShow={this.state.shouldShow} />
+                    <Search onSearchChange={this.onSearchChange} />
+                    <FlatList
+                        style={styles.GridView}
+                        showsHorizontalScrollIndicator={false}
+                        data={this.state.filterList}
+                        keyExtractor={item => item.name}
+                        renderItem={({ item }) => 
+                            <PokeCard pokeimage={item.image}
+                                    pokename={item.name}
+                                    pokeInfo={item.info}
+                                    onCardSelected={this.onCardSelected}></PokeCard>}
+                        numColumns={3}
+                    />
+                    <View style={styles.optionContainer}>
+                        <button style={this.buttonBinding(true)} disabled={this.state.previousCall ? false: true} onClick={this.previousHandler}>previous</button>
+                        <button style={this.buttonBinding(false)} disabled={this.state.nextCall ? false : true} onClick={this.nextHandler}>Next</button>
+                    </View>
+                </div>
+                <div style={this.state.currentPokemonSelected ? pokeGridCSS.areaVisible : pokeGridCSS.areaHidden}>
+                    <PokeDetails pokeInfo={this.state.currentPokemonSelected} />
+                </div>
             </div>
         );
     }
