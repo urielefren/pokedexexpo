@@ -1,0 +1,12 @@
+{
+  "name": "pokedexexpo",
+  "displayName": "pokedexexpo",
+  "expo": {
+    "name": "pokedexexpo",
+    "slug": "pokedexexpo",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
